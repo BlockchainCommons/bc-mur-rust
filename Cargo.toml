@@ -1,0 +1,46 @@
+[package]
+name = "bc-mur"
+version = "0.1.0"
+edition = "2024"
+description = "Multipart UR QR code generator — single-frame and animated fountain-coded QR sequences with optional logo overlay."
+authors = ["Blockchain Commons"]
+repository = "https://github.com/BlockchainCommons/bc-mur-rust"
+readme = "README.md"
+license = "BSD-2-Clause-Patent"
+keywords = [
+    "qrcode",
+    "ur",
+    "encoding",
+    "animation",
+] # Up to five
+categories = [
+    "encoding",
+    "multimedia::images",
+    "command-line-utilities",
+] # https://crates.io/category_slugs
+
+[[bin]]
+name = "mur"
+path = "src/main.rs"
+
+[dependencies]
+bc-ur = "^0.19.0"
+qrcode = "^0.14.1"
+image = { version = "^0.25.0", default-features = false, features = [
+    "png",
+    "jpeg",
+] }
+gif = "^0.13.0"
+color_quant = "^1.1.0"
+resvg = "^0.44.0"
+tempfile = "^3.8"
+thiserror = "^2.0"
+
+clap = { version = "^4.4.3", features = ["derive", "unstable-styles"] }
+anyhow = "^1.0.0"
+anstyle = "^1.0.1"
+
+[dev-dependencies]
+assert_cmd = "^2.0.12"
+dcbor = "^0.25.0"
+tempfile = "^3.8"
