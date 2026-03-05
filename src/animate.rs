@@ -10,7 +10,7 @@ use crate::{
 /// Parameters for multipart animated QR generation.
 pub struct AnimateParams {
     /// Maximum fragment length for fountain coding (default
-    /// 100).
+    /// 40).
     pub max_fragment_len: usize,
     /// Error correction level. `None` = auto: Low without
     /// logo, Quartile with logo.
@@ -42,7 +42,7 @@ pub struct AnimateParams {
 impl Default for AnimateParams {
     fn default() -> Self {
         Self {
-            max_fragment_len: 100,
+            max_fragment_len: 40,
             correction: None,
             size: 512,
             foreground: Color::BLACK,
