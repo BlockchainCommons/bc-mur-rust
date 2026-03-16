@@ -63,33 +63,22 @@ impl Logo {
             svg_data,
             &resvg::usvg::Options::default(),
         )
-        .map_err(|e| {
-            Error::SvgRender(format!("SVG parse: {e}"))
-        })?;
+        .map_err(|e| Error::SvgRender(format!("SVG parse: {e}")))?;
 
         let render_size = 512u32;
-        let mut pixmap = resvg::tiny_skia::Pixmap::new(
-            render_size,
-            render_size,
-        )
-        .ok_or_else(|| {
-            Error::SvgRender("failed to allocate pixmap".into())
-        })?;
+        let mut pixmap =
+            resvg::tiny_skia::Pixmap::new(render_size, render_size)
+                .ok_or_else(|| {
+                    Error::SvgRender("failed to allocate pixmap".into())
+                })?;
 
         let svg_size = tree.size();
         let sx = render_size as f32 / svg_size.width();
         let sy = render_size as f32 / svg_size.height();
         let scale = sx.min(sy);
-        let tx = (render_size as f32
-            - svg_size.width() * scale)
-            / 2.0;
-        let ty = (render_size as f32
-            - svg_size.height() * scale)
-            / 2.0;
-        let transform =
-            resvg::tiny_skia::Transform::from_scale(
-                scale, scale,
-            )
+        let tx = (render_size as f32 - svg_size.width() * scale) / 2.0;
+        let ty = (render_size as f32 - svg_size.height() * scale) / 2.0;
+        let transform = resvg::tiny_skia::Transform::from_scale(scale, scale)
             .post_translate(tx, ty);
 
         resvg::render(&tree, transform, &mut pixmap.as_mut());
@@ -148,9 +137,7 @@ impl Logo {
 
         let img = image::load_from_memory(data)
             .map_err(|e| {
-                Error::ImageEncode(format!(
-                    "failed to decode image: {e}"
-                ))
+                Error::ImageEncode(format!("failed to decode image: {e}"))
             })?
             .into_rgba8();
 
@@ -201,14 +188,9 @@ fn demultiply_alpha(data: &[u8]) -> Vec<u8> {
         } else if a == 255 {
             out[i..i + 4].copy_from_slice(&data[i..i + 4]);
         } else {
-            out[i] =
-                ((data[i] as u16 * 255 + a / 2) / a) as u8;
-            out[i + 1] =
-                ((data[i + 1] as u16 * 255 + a / 2) / a)
-                    as u8;
-            out[i + 2] =
-                ((data[i + 2] as u16 * 255 + a / 2) / a)
-                    as u8;
+            out[i] = ((data[i] as u16 * 255 + a / 2) / a) as u8;
+            out[i + 1] = ((data[i + 1] as u16 * 255 + a / 2) / a) as u8;
+            out[i + 2] = ((data[i + 2] as u16 * 255 + a / 2) / a) as u8;
             out[i + 3] = a as u8;
         }
     }

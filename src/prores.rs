@@ -1,5 +1,4 @@
-use std::path::Path;
-use std::process::Command;
+use std::{path::Path, process::Command};
 
 use crate::{Error, QrFrame, Result};
 
@@ -20,8 +19,7 @@ pub fn encode_prores(
     crate::write_frame_pngs(frames, tmp_dir.path())?;
 
     let fps_str = format!("{fps}");
-    let input_pattern =
-        tmp_dir.path().join("%04d.png");
+    let input_pattern = tmp_dir.path().join("%04d.png");
 
     let status = Command::new(&ffmpeg)
         .args([
@@ -60,10 +58,7 @@ fn which_ffmpeg() -> Result<String> {
         .map_err(|_| Error::FfmpegNotFound)?;
 
     if output.status.success() {
-        let path =
-            String::from_utf8_lossy(&output.stdout)
-                .trim()
-                .to_string();
+        let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
         if !path.is_empty() {
             return Ok(path);
         }

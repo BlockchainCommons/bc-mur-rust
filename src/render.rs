@@ -1,9 +1,9 @@
-use image::{ImageEncoder, codecs::png::PngEncoder, codecs::jpeg::JpegEncoder};
-
-use crate::{
-    Color, CorrectionLevel, Error, Logo, Result,
-    qr_matrix::QrMatrix,
+use image::{
+    ImageEncoder,
+    codecs::{jpeg::JpegEncoder, png::PngEncoder},
 };
+
+use crate::{Color, CorrectionLevel, Error, Logo, Result, qr_matrix::QrMatrix};
 
 /// An RGBA pixel buffer with encoding methods.
 pub struct RenderedImage {
@@ -55,8 +55,8 @@ impl RenderedImage {
 /// - `correction`: error correction level
 /// - `size`: target image size in pixels (square)
 /// - `fg` / `bg`: foreground and background colors
-/// - `quiet_zone`: number of background-colored modules
-///   around the QR code (default 1)
+/// - `quiet_zone`: number of background-colored modules around the QR code
+///   (default 1)
 /// - `logo`: optional logo overlay
 pub fn render_qr(
     message: &[u8],
@@ -85,15 +85,7 @@ pub fn render_ur_qr(
     logo: Option<&Logo>,
 ) -> Result<RenderedImage> {
     let upper = ur_string.to_ascii_uppercase();
-    render_qr(
-        upper.as_bytes(),
-        correction,
-        size,
-        fg,
-        bg,
-        quiet_zone,
-        logo,
-    )
+    render_qr(upper.as_bytes(), correction, size, fg, bg, quiet_zone, logo)
 }
 
 /// Paint the QR matrix into a pixel buffer with module-aligned
@@ -108,14 +100,12 @@ pub(crate) fn render_from_matrix(
 ) -> Result<RenderedImage> {
     let qr_modules = matrix.width();
     let total_modules = qr_modules + 2 * quiet_zone as usize;
-    let pixels_per_module =
-        (size as usize / total_modules).max(1);
+    let pixels_per_module = (size as usize / total_modules).max(1);
     let compositing_size = total_modules * pixels_per_module;
     let qz_px = quiet_zone as usize * pixels_per_module;
 
     // Allocate RGBA buffer, fill with background
-    let mut pixels =
-        vec![0u8; compositing_size * compositing_size * 4];
+    let mut pixels = vec![0u8; compositing_size * compositing_size * 4];
     // Fill entire buffer with background color
     for px in pixels.chunks_exact_mut(4) {
         px[0] = bg.r;
@@ -127,11 +117,7 @@ pub(crate) fn render_from_matrix(
     // Paint QR modules offset by quiet zone
     for row in 0..qr_modules {
         for col in 0..qr_modules {
-            let color = if matrix.is_dark(col, row) {
-                fg
-            } else {
-                bg
-            };
+            let color = if matrix.is_dark(col, row) { fg } else { bg };
             let px = qz_px + col * pixels_per_module;
             let py = qz_px + row * pixels_per_module;
             fill_rect(
@@ -209,32 +195,29 @@ fn composite_logo(
     bg: Color,
     logo: &Logo,
 ) {
-    let layout = LogoLayout::new(
-        module_count,
-        logo.fraction,
-        logo.clear_border,
-    );
+    let layout =
+        LogoLayout::new(module_count, logo.fraction, logo.clear_border);
 
     if layout.logo_modules == 0 {
         return;
     }
 
     // Clear color: use white if background is transparent
-    let clear_color =
-        if bg.is_transparent() { Color::WHITE } else { bg };
+    let clear_color = if bg.is_transparent() {
+        Color::WHITE
+    } else {
+        bg
+    };
 
     let center_module = module_count as f64 / 2.0;
     let qr_px = module_count * pixels_per_module;
 
     // Clear the center area (offset by quiet zone)
-    let start_module =
-        (module_count - layout.cleared_modules) / 2;
+    let start_module = (module_count - layout.cleared_modules) / 2;
     match logo.clear_shape {
         crate::LogoClearShape::Square => {
-            let clear_pixels =
-                layout.cleared_modules * pixels_per_module;
-            let clear_origin =
-                qz_px + (qr_px - clear_pixels) / 2;
+            let clear_pixels = layout.cleared_modules * pixels_per_module;
+            let clear_origin = qz_px + (qr_px - clear_pixels) / 2;
             fill_rect(
                 pixels,
                 compositing_size,
@@ -249,19 +232,15 @@ fn composite_logo(
             let radius = layout.cleared_modules as f64 / 2.0;
             for row in 0..layout.cleared_modules {
                 for col in 0..layout.cleared_modules {
-                    let mx =
-                        (start_module + col) as f64 + 0.5;
-                    let my =
-                        (start_module + row) as f64 + 0.5;
+                    let mx = (start_module + col) as f64 + 0.5;
+                    let my = (start_module + row) as f64 + 0.5;
                     let dx = mx - center_module;
                     let dy = my - center_module;
                     if dx * dx + dy * dy <= radius * radius {
-                        let px = qz_px
-                            + (start_module + col)
-                                * pixels_per_module;
-                        let py = qz_px
-                            + (start_module + row)
-                                * pixels_per_module;
+                        let px =
+                            qz_px + (start_module + col) * pixels_per_module;
+                        let py =
+                            qz_px + (start_module + row) * pixels_per_module;
                         fill_rect(
                             pixels,
                             compositing_size,
@@ -297,8 +276,7 @@ fn composite_logo(
             let src_offset = (row * logo_pixels + col) * 4;
             let dst_x = logo_origin + col;
             let dst_y = logo_origin + row;
-            let dst_offset =
-                (dst_y * compositing_size + dst_x) * 4;
+            let dst_offset = (dst_y * compositing_size + dst_x) * 4;
 
             let sa = scaled[src_offset + 3] as u32;
             if sa == 0 {
@@ -306,10 +284,8 @@ fn composite_logo(
             }
             if sa == 255 {
                 pixels[dst_offset] = scaled[src_offset];
-                pixels[dst_offset + 1] =
-                    scaled[src_offset + 1];
-                pixels[dst_offset + 2] =
-                    scaled[src_offset + 2];
+                pixels[dst_offset + 1] = scaled[src_offset + 1];
+                pixels[dst_offset + 2] = scaled[src_offset + 2];
                 pixels[dst_offset + 3] = 255;
             } else {
                 let da = pixels[dst_offset + 3] as u32;
@@ -317,17 +293,12 @@ fn composite_logo(
                 let out_a = sa + da * inv_sa / 255;
                 if out_a > 0 {
                     for c in 0..3 {
-                        let sc =
-                            scaled[src_offset + c] as u32;
-                        let dc =
-                            pixels[dst_offset + c] as u32;
-                        pixels[dst_offset + c] = ((sc * sa
-                            + dc * da * inv_sa / 255)
-                            / out_a)
-                            as u8;
+                        let sc = scaled[src_offset + c] as u32;
+                        let dc = pixels[dst_offset + c] as u32;
+                        pixels[dst_offset + c] =
+                            ((sc * sa + dc * da * inv_sa / 255) / out_a) as u8;
                     }
-                    pixels[dst_offset + 3] =
-                        out_a.min(255) as u8;
+                    pixels[dst_offset + 3] = out_a.min(255) as u8;
                 }
             }
         }
@@ -342,21 +313,15 @@ struct LogoLayout {
 }
 
 impl LogoLayout {
-    fn new(
-        module_count: usize,
-        fraction: f64,
-        clear_border: usize,
-    ) -> Self {
-        let mut logo =
-            (module_count as f64 * fraction).round() as usize;
+    fn new(module_count: usize, fraction: f64, clear_border: usize) -> Self {
+        let mut logo = (module_count as f64 * fraction).round() as usize;
         // Force odd for symmetry
         if logo.is_multiple_of(2) {
             logo += 1;
         }
         let mut cleared = logo + 2 * clear_border;
         // Cap cleared area at 40% of module count
-        let max_cleared =
-            (module_count as f64 * 0.40).floor() as usize;
+        let max_cleared = (module_count as f64 * 0.40).floor() as usize;
         if cleared > max_cleared {
             cleared = max_cleared;
             logo = cleared.saturating_sub(2 * clear_border);
@@ -365,10 +330,7 @@ impl LogoLayout {
         if logo.is_multiple_of(2) && logo > 0 {
             logo -= 1;
         }
-        Self {
-            logo_modules: logo,
-            cleared_modules: cleared,
-        }
+        Self { logo_modules: logo, cleared_modules: cleared }
     }
 }
 
@@ -403,15 +365,13 @@ fn bilinear_scale(
 ) -> Vec<u8> {
     let mut dst = vec![0u8; (dst_w * dst_h * 4) as usize];
     for y in 0..dst_h {
-        let fy = y as f64 * (src_h - 1) as f64
-            / (dst_h - 1).max(1) as f64;
+        let fy = y as f64 * (src_h - 1) as f64 / (dst_h - 1).max(1) as f64;
         let y0 = fy.floor() as u32;
         let y1 = (y0 + 1).min(src_h - 1);
         let wy = fy - y0 as f64;
 
         for x in 0..dst_w {
-            let fx = x as f64 * (src_w - 1) as f64
-                / (dst_w - 1).max(1) as f64;
+            let fx = x as f64 * (src_w - 1) as f64 / (dst_w - 1).max(1) as f64;
             let x0 = fx.floor() as u32;
             let x1 = (x0 + 1).min(src_w - 1);
             let wx = fx - x0 as f64;
@@ -470,10 +430,7 @@ mod tests {
         .unwrap();
         assert_eq!(img.width, 256);
         assert_eq!(img.height, 256);
-        assert_eq!(
-            img.pixels.len(),
-            256 * 256 * 4
-        );
+        assert_eq!(img.pixels.len(), 256 * 256 * 4);
     }
 
     #[test]

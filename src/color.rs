@@ -10,16 +10,11 @@ pub struct Color {
 }
 
 impl Color {
-    pub const BLACK: Self =
-        Self { r: 0, g: 0, b: 0, a: 255 };
-    pub const WHITE: Self =
-        Self { r: 255, g: 255, b: 255, a: 255 };
-    pub const TRANSPARENT: Self =
-        Self { r: 0, g: 0, b: 0, a: 0 };
+    pub const BLACK: Self = Self { r: 0, g: 0, b: 0, a: 255 };
+    pub const WHITE: Self = Self { r: 255, g: 255, b: 255, a: 255 };
+    pub const TRANSPARENT: Self = Self { r: 0, g: 0, b: 0, a: 0 };
 
-    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self { r, g, b, a }
-    }
+    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self { Self { r, g, b, a } }
 
     /// Parse hex color: `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
     pub fn from_hex(s: &str) -> Result<Self> {
@@ -73,9 +68,7 @@ fn hex_nibble(b: u8) -> Result<u8> {
         b'0'..=b'9' => Ok(b - b'0'),
         b'a'..=b'f' => Ok(b - b'a' + 10),
         b'A'..=b'F' => Ok(b - b'A' + 10),
-        _ => Err(Error::InvalidColor(format!(
-            "invalid hex digit: {b}"
-        ))),
+        _ => Err(Error::InvalidColor(format!("invalid hex digit: {b}"))),
     }
 }
 
@@ -114,9 +107,6 @@ mod tests {
 
     #[test]
     fn display_rgba() {
-        assert_eq!(
-            Color::new(255, 128, 0, 128).to_string(),
-            "#FF800080"
-        );
+        assert_eq!(Color::new(255, 128, 0, 128).to_string(), "#FF800080");
     }
 }

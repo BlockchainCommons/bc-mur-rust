@@ -1,10 +1,9 @@
 use bc_mur::{
-    AnimateParams, Color, CorrectionLevel, Logo,
-    LogoClearShape, DEFAULT_MAX_MODULES,
+    AnimateParams, Color, CorrectionLevel, DEFAULT_MAX_MODULES, Logo,
+    LogoClearShape,
 };
 
-const TEST_SVG: &[u8] =
-    include_bytes!("test_data/bc-logo.svg");
+const TEST_SVG: &[u8] = include_bytes!("test_data/bc-logo.svg");
 
 // A short UR string that fits in a single QR frame.
 const SHORT_UR: &str = "ur:bytes/hdcxdwinvezm";
@@ -13,8 +12,7 @@ const SHORT_UR: &str = "ur:bytes/hdcxdwinvezm";
 /// multipart encoding.
 fn long_ur() -> bc_ur::UR {
     // 500 bytes of deterministic data, wrapped as CBOR
-    let data: Vec<u8> =
-        (0u16..500).map(|i| (i % 256) as u8).collect();
+    let data: Vec<u8> = (0u16..500).map(|i| (i % 256) as u8).collect();
     let cbor: dcbor::CBOR = data.into();
     bc_ur::UR::new("bytes", cbor).unwrap()
 }
@@ -72,9 +70,10 @@ fn single_frame_custom_colors() {
     .unwrap();
     assert_eq!(img.width, 128);
     // Verify some pixels have the expected foreground color
-    let has_blue = img.pixels.chunks_exact(4).any(|px| {
-        px[0] == 0 && px[1] == 0 && px[2] == 255
-    });
+    let has_blue = img
+        .pixels
+        .chunks_exact(4)
+        .any(|px| px[0] == 0 && px[1] == 0 && px[2] == 255);
     assert!(has_blue, "expected blue foreground pixels");
 }
 
@@ -134,13 +133,8 @@ fn single_frame_quiet_zone_4() {
 
 #[test]
 fn single_frame_with_svg_logo() {
-    let logo = Logo::from_svg(
-        TEST_SVG,
-        0.25,
-        1,
-        LogoClearShape::Square,
-    )
-    .unwrap();
+    let logo =
+        Logo::from_svg(TEST_SVG, 0.25, 1, LogoClearShape::Square).unwrap();
     assert_eq!(logo.width, 512);
     assert_eq!(logo.height, 512);
 
@@ -161,13 +155,8 @@ fn single_frame_with_svg_logo() {
 
 #[test]
 fn single_frame_with_circle_logo() {
-    let logo = Logo::from_svg(
-        TEST_SVG,
-        0.30,
-        2,
-        LogoClearShape::Circle,
-    )
-    .unwrap();
+    let logo =
+        Logo::from_svg(TEST_SVG, 0.30, 2, LogoClearShape::Circle).unwrap();
 
     let img = bc_mur::render_qr(
         b"UR:BYTES/TEST",
@@ -196,12 +185,10 @@ fn animated_gif_basic() {
         ..Default::default()
     };
 
-    let frames =
-        bc_mur::generate_frames(&ur, &params).unwrap();
+    let frames = bc_mur::generate_frames(&ur, &params).unwrap();
     assert!(frames.len() >= 2, "expected multiple frames");
 
-    let gif =
-        bc_mur::encode_animated_gif(&frames, 4.0).unwrap();
+    let gif = bc_mur::encode_animated_gif(&frames, 4.0).unwrap();
     // GIF magic: GIF89a
     assert_eq!(&gif[..6], b"GIF89a");
     assert!(gif.len() > 100);
@@ -211,13 +198,8 @@ fn animated_gif_basic() {
 fn animated_gif_with_logo() {
     let ur = long_ur();
 
-    let logo = Logo::from_svg(
-        TEST_SVG,
-        0.20,
-        1,
-        LogoClearShape::Square,
-    )
-    .unwrap();
+    let logo =
+        Logo::from_svg(TEST_SVG, 0.20, 1, LogoClearShape::Square).unwrap();
 
     let params = AnimateParams {
         max_fragment_len: 50,
@@ -228,10 +210,8 @@ fn animated_gif_with_logo() {
         ..Default::default()
     };
 
-    let frames =
-        bc_mur::generate_frames(&ur, &params).unwrap();
-    let gif =
-        bc_mur::encode_animated_gif(&frames, 4.0).unwrap();
+    let frames = bc_mur::generate_frames(&ur, &params).unwrap();
+    let gif = bc_mur::encode_animated_gif(&frames, 4.0).unwrap();
     assert_eq!(&gif[..6], b"GIF89a");
 }
 
@@ -247,18 +227,16 @@ fn frame_dump() {
         ..Default::default()
     };
 
-    let frames =
-        bc_mur::generate_frames(&ur, &params).unwrap();
+    let frames = bc_mur::generate_frames(&ur, &params).unwrap();
 
     let tmp = tempfile::tempdir().unwrap();
     bc_mur::write_frame_pngs(&frames, tmp.path()).unwrap();
 
     // Verify at least one PNG file was written
-    let entries: Vec<_> =
-        std::fs::read_dir(tmp.path())
-            .unwrap()
-            .filter_map(|e| e.ok())
-            .collect();
+    let entries: Vec<_> = std::fs::read_dir(tmp.path())
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .collect();
     assert_eq!(entries.len(), frames.len());
 }
 
@@ -271,49 +249,30 @@ fn invalid_color_hex() {
 
 #[test]
 fn logo_fraction_out_of_range() {
-    assert!(Logo::from_svg(
-        TEST_SVG,
-        0.0,
-        1,
-        LogoClearShape::Square,
-    )
-    .is_err());
+    assert!(Logo::from_svg(TEST_SVG, 0.0, 1, LogoClearShape::Square,).is_err());
 
-    assert!(Logo::from_svg(
-        TEST_SVG,
-        1.0,
-        1,
-        LogoClearShape::Square,
-    )
-    .is_err());
+    assert!(Logo::from_svg(TEST_SVG, 1.0, 1, LogoClearShape::Square,).is_err());
 }
 
 // ─── Density check ────────────────────────────────────
 
 #[test]
 fn qr_module_count_small() {
-    let count = bc_mur::qr_module_count(
-        b"HELLO",
-        CorrectionLevel::Low,
-    )
-    .unwrap();
+    let count =
+        bc_mur::qr_module_count(b"HELLO", CorrectionLevel::Low).unwrap();
     assert_eq!(count, 21); // Version 1
 }
 
 #[test]
 fn check_qr_density_passes() {
-    bc_mur::check_qr_density(21, DEFAULT_MAX_MODULES)
-        .unwrap();
+    bc_mur::check_qr_density(21, DEFAULT_MAX_MODULES).unwrap();
 }
 
 #[test]
 fn check_qr_density_fails() {
     let err = bc_mur::check_qr_density(150, 117).unwrap_err();
     match err {
-        bc_mur::Error::QrCodeTooDense {
-            module_count,
-            max_modules,
-        } => {
+        bc_mur::Error::QrCodeTooDense { module_count, max_modules } => {
             assert_eq!(module_count, 150);
             assert_eq!(max_modules, 117);
         }
@@ -326,30 +285,22 @@ fn density_check_on_dense_qr() {
     // Generate enough data to exceed version 25 (117 modules)
     // at Low correction. ~1000 bytes of uppercase UR data
     // should push well beyond version 25.
-    let data: Vec<u8> =
-        (0u16..1000).map(|i| (i % 256) as u8).collect();
+    let data: Vec<u8> = (0u16..1000).map(|i| (i % 256) as u8).collect();
     let cbor: dcbor::CBOR = data.into();
     let ur = bc_ur::UR::new("bytes", cbor).unwrap();
     let ur_string = ur.qr_string();
     let upper = ur_string.to_ascii_uppercase();
-    let modules = bc_mur::qr_module_count(
-        upper.as_bytes(),
-        CorrectionLevel::Low,
-    )
-    .unwrap();
+    let modules =
+        bc_mur::qr_module_count(upper.as_bytes(), CorrectionLevel::Low)
+            .unwrap();
     assert!(
         modules > DEFAULT_MAX_MODULES,
         "expected dense QR ({modules} modules), \
          but it fits within {DEFAULT_MAX_MODULES}"
     );
-    let err = bc_mur::check_qr_density(
-        modules,
-        DEFAULT_MAX_MODULES,
-    )
-    .unwrap_err();
-    assert!(
-        matches!(err, bc_mur::Error::QrCodeTooDense { .. })
-    );
+    let err =
+        bc_mur::check_qr_density(modules, DEFAULT_MAX_MODULES).unwrap_err();
+    assert!(matches!(err, bc_mur::Error::QrCodeTooDense { .. }));
 }
 
 // ─── Insufficient frames ─────────────────────────────
@@ -366,10 +317,7 @@ fn insufficient_frames_error() {
     assert!(result.is_err());
     let err = result.err().unwrap();
     assert!(
-        matches!(
-            err,
-            bc_mur::Error::InsufficientFrames { .. }
-        ),
+        matches!(err, bc_mur::Error::InsufficientFrames { .. }),
         "expected InsufficientFrames, got {err}"
     );
 }
@@ -383,8 +331,7 @@ fn frame_count_exact() {
         frame_count: Some(100),
         ..Default::default()
     };
-    let frames =
-        bc_mur::generate_frames(&ur, &params).unwrap();
+    let frames = bc_mur::generate_frames(&ur, &params).unwrap();
     assert_eq!(frames.len(), 100);
 }
 
@@ -400,10 +347,7 @@ fn animate_density_check() {
     assert!(result.is_err());
     let err = result.err().unwrap();
     assert!(
-        matches!(
-            err,
-            bc_mur::Error::QrCodeTooDense { .. }
-        ),
+        matches!(err, bc_mur::Error::QrCodeTooDense { .. }),
         "expected QrCodeTooDense, got {err}"
     );
 }
@@ -415,20 +359,10 @@ fn write_test_outputs() {
     let out_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("out");
     std::fs::create_dir_all(&out_dir).unwrap();
 
-    let logo = Logo::from_svg(
-        TEST_SVG,
-        0.25,
-        1,
-        LogoClearShape::Square,
-    )
-    .unwrap();
-    let circle_logo = Logo::from_svg(
-        TEST_SVG,
-        0.25,
-        1,
-        LogoClearShape::Circle,
-    )
-    .unwrap();
+    let logo =
+        Logo::from_svg(TEST_SVG, 0.25, 1, LogoClearShape::Square).unwrap();
+    let circle_logo =
+        Logo::from_svg(TEST_SVG, 0.25, 1, LogoClearShape::Circle).unwrap();
 
     // ── Light mode (default) ──
 
@@ -443,11 +377,8 @@ fn write_test_outputs() {
         None,
     )
     .unwrap();
-    std::fs::write(
-        out_dir.join("single-no-logo.png"),
-        img.to_png().unwrap(),
-    )
-    .unwrap();
+    std::fs::write(out_dir.join("single-no-logo.png"), img.to_png().unwrap())
+        .unwrap();
 
     // Single frame, with square logo
     let img = bc_mur::render_ur_qr(
@@ -460,11 +391,8 @@ fn write_test_outputs() {
         Some(&logo),
     )
     .unwrap();
-    std::fs::write(
-        out_dir.join("single-with-logo.png"),
-        img.to_png().unwrap(),
-    )
-    .unwrap();
+    std::fs::write(out_dir.join("single-with-logo.png"), img.to_png().unwrap())
+        .unwrap();
 
     // Single frame, circle logo
     let img = bc_mur::render_ur_qr(
@@ -532,11 +460,8 @@ fn write_test_outputs() {
         None,
     )
     .unwrap();
-    std::fs::write(
-        out_dir.join("single-qz0.png"),
-        img.to_png().unwrap(),
-    )
-    .unwrap();
+    std::fs::write(out_dir.join("single-qz0.png"), img.to_png().unwrap())
+        .unwrap();
 
     // Wide quiet zone (4 modules)
     let img = bc_mur::render_ur_qr(
@@ -549,11 +474,8 @@ fn write_test_outputs() {
         None,
     )
     .unwrap();
-    std::fs::write(
-        out_dir.join("single-qz4.png"),
-        img.to_png().unwrap(),
-    )
-    .unwrap();
+    std::fs::write(out_dir.join("single-qz4.png"), img.to_png().unwrap())
+        .unwrap();
 
     // Dark mode with wide quiet zone and logo
     let img = bc_mur::render_ur_qr(
@@ -582,12 +504,9 @@ fn write_test_outputs() {
         fps: 8.0,
         ..Default::default()
     };
-    let frames =
-        bc_mur::generate_frames(&ur, &params).unwrap();
-    let gif =
-        bc_mur::encode_animated_gif(&frames, 8.0).unwrap();
-    std::fs::write(out_dir.join("animated.gif"), &gif)
-        .unwrap();
+    let frames = bc_mur::generate_frames(&ur, &params).unwrap();
+    let gif = bc_mur::encode_animated_gif(&frames, 8.0).unwrap();
+    std::fs::write(out_dir.join("animated.gif"), &gif).unwrap();
 
     // Animated with logo
     let params_logo = AnimateParams {
@@ -598,16 +517,9 @@ fn write_test_outputs() {
         logo: Some(logo.clone()),
         ..Default::default()
     };
-    let frames_logo =
-        bc_mur::generate_frames(&ur, &params_logo).unwrap();
-    let gif_logo =
-        bc_mur::encode_animated_gif(&frames_logo, 8.0)
-            .unwrap();
-    std::fs::write(
-        out_dir.join("animated-logo.gif"),
-        &gif_logo,
-    )
-    .unwrap();
+    let frames_logo = bc_mur::generate_frames(&ur, &params_logo).unwrap();
+    let gif_logo = bc_mur::encode_animated_gif(&frames_logo, 8.0).unwrap();
+    std::fs::write(out_dir.join("animated-logo.gif"), &gif_logo).unwrap();
 
     // Animated with circle logo
     let params_circle_logo = AnimateParams {
@@ -619,16 +531,11 @@ fn write_test_outputs() {
         ..Default::default()
     };
     let frames_circle_logo =
-        bc_mur::generate_frames(&ur, &params_circle_logo)
-            .unwrap();
+        bc_mur::generate_frames(&ur, &params_circle_logo).unwrap();
     let gif_circle_logo =
-        bc_mur::encode_animated_gif(&frames_circle_logo, 8.0)
-            .unwrap();
-    std::fs::write(
-        out_dir.join("animated-circle-logo.gif"),
-        &gif_circle_logo,
-    )
-    .unwrap();
+        bc_mur::encode_animated_gif(&frames_circle_logo, 8.0).unwrap();
+    std::fs::write(out_dir.join("animated-circle-logo.gif"), &gif_circle_logo)
+        .unwrap();
 
     // Animated dark mode with logo
     let params_dark_logo = AnimateParams {
@@ -642,16 +549,11 @@ fn write_test_outputs() {
         ..Default::default()
     };
     let frames_dark_logo =
-        bc_mur::generate_frames(&ur, &params_dark_logo)
-            .unwrap();
+        bc_mur::generate_frames(&ur, &params_dark_logo).unwrap();
     let gif_dark_logo =
-        bc_mur::encode_animated_gif(&frames_dark_logo, 8.0)
-            .unwrap();
-    std::fs::write(
-        out_dir.join("animated-dark-logo.gif"),
-        &gif_dark_logo,
-    )
-    .unwrap();
+        bc_mur::encode_animated_gif(&frames_dark_logo, 8.0).unwrap();
+    std::fs::write(out_dir.join("animated-dark-logo.gif"), &gif_dark_logo)
+        .unwrap();
 
     // Animated dark mode
     let params_dark = AnimateParams {
@@ -663,27 +565,13 @@ fn write_test_outputs() {
         background: Color::BLACK,
         ..Default::default()
     };
-    let frames_dark =
-        bc_mur::generate_frames(&ur, &params_dark).unwrap();
-    let gif_dark =
-        bc_mur::encode_animated_gif(&frames_dark, 8.0)
-            .unwrap();
-    std::fs::write(
-        out_dir.join("animated-dark.gif"),
-        &gif_dark,
-    )
-    .unwrap();
+    let frames_dark = bc_mur::generate_frames(&ur, &params_dark).unwrap();
+    let gif_dark = bc_mur::encode_animated_gif(&frames_dark, 8.0).unwrap();
+    std::fs::write(out_dir.join("animated-dark.gif"), &gif_dark).unwrap();
 
     // ProRes 4444 (requires ffmpeg on PATH)
     let prores_path = out_dir.join("animated.mov");
-    bc_mur::encode_prores(
-        &frames,
-        8.0,
-        &prores_path,
-    )
-    .unwrap();
+    bc_mur::encode_prores(&frames, 8.0, &prores_path).unwrap();
     assert!(prores_path.exists());
-    assert!(
-        std::fs::metadata(&prores_path).unwrap().len() > 100
-    );
+    assert!(std::fs::metadata(&prores_path).unwrap().len() > 100);
 }

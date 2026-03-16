@@ -3,8 +3,7 @@ use bc_ur::{MultipartEncoder, UR};
 use crate::{
     Color, CorrectionLevel, Error, Logo, Result,
     qr_matrix::{QrMatrix, check_qr_density},
-    render::render_from_matrix,
-    render::RenderedImage,
+    render::{RenderedImage, render_from_matrix},
 };
 
 /// Parameters for multipart animated QR generation.
@@ -83,8 +82,7 @@ pub fn generate_frames(
     ur: &UR,
     params: &AnimateParams,
 ) -> Result<Vec<QrFrame>> {
-    let mut encoder =
-        MultipartEncoder::new(ur, params.max_fragment_len)?;
+    let mut encoder = MultipartEncoder::new(ur, params.max_fragment_len)?;
     let parts_count = encoder.parts_count();
     let total_frames = if let Some(n) = params.frame_count {
         n
@@ -107,15 +105,15 @@ pub fn generate_frames(
         let part = encoder.next_part()?;
         let index = encoder.current_index();
         let upper = part.to_ascii_uppercase();
-        let matrix =
-            QrMatrix::encode(upper.as_bytes(), correction)?;
+        let matrix = QrMatrix::encode(upper.as_bytes(), correction)?;
 
         // Check density on first frame (all frames use the
         // same QR version for a given fragment length).
         if i == 0
-            && let Some(limit) = params.max_modules {
-                check_qr_density(matrix.width(), limit)?;
-            }
+            && let Some(limit) = params.max_modules
+        {
+            check_qr_density(matrix.width(), limit)?;
+        }
 
         let image = render_from_matrix(
             &matrix,
@@ -136,14 +134,9 @@ pub fn generate_frames(
 /// For QR codes without logos, uses a small global palette
 /// (2–4 colors). For QR codes with logos, uses per-frame
 /// quantization.
-pub fn encode_animated_gif(
-    frames: &[QrFrame],
-    fps: f64,
-) -> Result<Vec<u8>> {
+pub fn encode_animated_gif(frames: &[QrFrame], fps: f64) -> Result<Vec<u8>> {
     if frames.is_empty() {
-        return Err(Error::InvalidParameter(
-            "no frames to encode".into(),
-        ));
+        return Err(Error::InvalidParameter("no frames to encode".into()));
     }
 
     let width = frames[0].image.width as u16;
@@ -152,23 +145,12 @@ pub fn encode_animated_gif(
 
     let mut buf = Vec::new();
     {
-        let mut encoder = gif::Encoder::new(
-            &mut buf,
-            width,
-            height,
-            &[],
-        )
-        .map_err(|e| {
-            Error::GifEncode(format!("GIF init: {e}"))
-        })?;
+        let mut encoder = gif::Encoder::new(&mut buf, width, height, &[])
+            .map_err(|e| Error::GifEncode(format!("GIF init: {e}")))?;
 
         encoder
             .set_repeat(gif::Repeat::Infinite)
-            .map_err(|e| {
-                Error::GifEncode(format!(
-                    "GIF set repeat: {e}"
-                ))
-            })?;
+            .map_err(|e| Error::GifEncode(format!("GIF set repeat: {e}")))?;
 
         for frame_data in frames {
             let rgba = &frame_data.image.pixels;
@@ -182,13 +164,10 @@ pub fn encode_animated_gif(
                 palette: Some(palette),
                 ..Default::default()
             };
-            frame.buffer =
-                std::borrow::Cow::Owned(indexed);
+            frame.buffer = std::borrow::Cow::Owned(indexed);
 
             encoder.write_frame(&frame).map_err(|e| {
-                Error::GifEncode(format!(
-                    "GIF write frame: {e}"
-                ))
+                Error::GifEncode(format!("GIF write frame: {e}"))
             })?;
         }
     }
@@ -203,8 +182,7 @@ pub fn write_frame_pngs(
 ) -> Result<()> {
     std::fs::create_dir_all(output_dir)?;
     for (i, frame) in frames.iter().enumerate() {
-        let path =
-            output_dir.join(format!("{:04}.png", i));
+        let path = output_dir.join(format!("{:04}.png", i));
         let png = frame.image.to_png()?;
         std::fs::write(&path, &png)?;
     }
@@ -215,11 +193,7 @@ pub fn write_frame_pngs(
 ///
 /// Uses median-cut quantization via the `image` crate's
 /// color quantization.
-fn quantize_frame(
-    rgba: &[u8],
-    width: u32,
-    height: u32,
-) -> (Vec<u8>, Vec<u8>) {
+fn quantize_frame(rgba: &[u8], width: u32, height: u32) -> (Vec<u8>, Vec<u8>) {
     // Collect unique colors (up to limit)
     let mut unique_colors: Vec<[u8; 4]> = Vec::new();
     let mut seen = std::collections::HashSet::new();
@@ -259,11 +233,7 @@ fn quantize_frame(
         (palette, indexed)
     } else {
         // Many colors (logo present) — use NeuQuant
-        let nq = color_quant::NeuQuant::new(
-            10,
-            256,
-            rgba,
-        );
+        let nq = color_quant::NeuQuant::new(10, 256, rgba);
         let palette: Vec<u8> = (0..256)
             .flat_map(|i| {
                 if let Some(c) = nq.lookup(i) {

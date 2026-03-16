@@ -16,7 +16,7 @@
 //! # Example
 //!
 //! ```rust
-//! use bc_mur::{render_qr, CorrectionLevel, Color};
+//! use bc_mur::{Color, CorrectionLevel, render_qr};
 //!
 //! let img = render_qr(
 //!     b"UR:BYTES/HDCXDWINVEZM",
@@ -26,7 +26,8 @@
 //!     Color::WHITE,
 //!     1,    // quiet zone modules
 //!     None, // no logo
-//! ).unwrap();
+//! )
+//! .unwrap();
 //! let png_bytes = img.to_png().unwrap();
 //! assert!(!png_bytes.is_empty());
 //! ```
@@ -41,15 +42,13 @@ mod qr_matrix;
 mod render;
 
 pub use animate::{
-    encode_animated_gif, generate_frames, write_frame_pngs,
-    AnimateParams, QrFrame,
+    AnimateParams, QrFrame, encode_animated_gif, generate_frames,
+    write_frame_pngs,
 };
 pub use color::Color;
 pub use correction::CorrectionLevel;
 pub use error::{Error, Result};
 pub use logo::{Logo, LogoClearShape};
 pub use prores::encode_prores;
-pub use qr_matrix::{
-    check_qr_density, qr_module_count, DEFAULT_MAX_MODULES,
-};
-pub use render::{render_qr, render_ur_qr, RenderedImage};
+pub use qr_matrix::{DEFAULT_MAX_MODULES, check_qr_density, qr_module_count};
+pub use render::{RenderedImage, render_qr, render_ur_qr};

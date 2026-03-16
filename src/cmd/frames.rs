@@ -1,12 +1,11 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use clap::Args;
-
 use bc_mur::{
-    AnimateParams, Color, CorrectionLevel, Logo,
-    LogoClearShape, DEFAULT_MAX_MODULES,
+    AnimateParams, Color, CorrectionLevel, DEFAULT_MAX_MODULES, Logo,
+    LogoClearShape,
 };
+use clap::Args;
 
 use crate::exec::Exec;
 
@@ -87,26 +86,19 @@ pub struct CommandArgs {
 
 impl Exec for CommandArgs {
     fn exec(&self) -> Result<String> {
-        let ur_string =
-            super::single::read_input(&self.ur_string)?;
+        let ur_string = super::single::read_input(&self.ur_string)?;
         let (fg, bg) = if self.dark {
-            (
-                Color::from_hex(&self.bg)?,
-                Color::from_hex(&self.fg)?,
-            )
+            (Color::from_hex(&self.bg)?, Color::from_hex(&self.fg)?)
         } else {
-            (
-                Color::from_hex(&self.fg)?,
-                Color::from_hex(&self.bg)?,
-            )
+            (Color::from_hex(&self.fg)?, Color::from_hex(&self.bg)?)
         };
 
         let logo = if let Some(path) = &self.logo {
             let svg_data = std::fs::read(path)?;
-            let shape: LogoClearShape =
-                self.logo_shape.parse().map_err(|e: String| {
-                    anyhow::anyhow!(e)
-                })?;
+            let shape: LogoClearShape = self
+                .logo_shape
+                .parse()
+                .map_err(|e: String| anyhow::anyhow!(e))?;
             Some(Logo::from_svg(
                 &svg_data,
                 self.logo_fraction,
@@ -121,8 +113,7 @@ impl Exec for CommandArgs {
             .correction
             .as_ref()
             .map(|s| {
-                s.parse::<CorrectionLevel>()
-                    .map_err(|e| anyhow::anyhow!(e))
+                s.parse::<CorrectionLevel>().map_err(|e| anyhow::anyhow!(e))
             })
             .transpose()?;
 
@@ -146,8 +137,7 @@ impl Exec for CommandArgs {
             },
         };
 
-        let frames =
-            bc_mur::generate_frames(&ur, &params)?;
+        let frames = bc_mur::generate_frames(&ur, &params)?;
         bc_mur::write_frame_pngs(&frames, &self.output)?;
 
         Ok(format!(

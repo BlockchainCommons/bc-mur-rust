@@ -1,13 +1,10 @@
-use std::io::Read;
-use std::path::PathBuf;
+use std::{io::Read, path::PathBuf};
 
 use anyhow::Result;
-use clap::Args;
-
 use bc_mur::{
-    Color, CorrectionLevel, Logo, LogoClearShape,
-    DEFAULT_MAX_MODULES,
+    Color, CorrectionLevel, DEFAULT_MAX_MODULES, Logo, LogoClearShape,
 };
+use clap::Args;
 
 use crate::exec::Exec;
 
@@ -82,23 +79,17 @@ impl Exec for CommandArgs {
     fn exec(&self) -> Result<String> {
         let ur_string = read_input(&self.ur_string)?;
         let (fg, bg) = if self.dark {
-            (
-                Color::from_hex(&self.bg)?,
-                Color::from_hex(&self.fg)?,
-            )
+            (Color::from_hex(&self.bg)?, Color::from_hex(&self.fg)?)
         } else {
-            (
-                Color::from_hex(&self.fg)?,
-                Color::from_hex(&self.bg)?,
-            )
+            (Color::from_hex(&self.fg)?, Color::from_hex(&self.bg)?)
         };
 
         let logo = if let Some(path) = &self.logo {
             let svg_data = std::fs::read(path)?;
-            let shape: LogoClearShape =
-                self.logo_shape.parse().map_err(|e: String| {
-                    anyhow::anyhow!(e)
-                })?;
+            let shape: LogoClearShape = self
+                .logo_shape
+                .parse()
+                .map_err(|e: String| anyhow::anyhow!(e))?;
             Some(Logo::from_svg(
                 &svg_data,
                 self.logo_fraction,
@@ -125,14 +116,9 @@ impl Exec for CommandArgs {
         // Check QR density before rendering.
         if !self.no_density_check {
             let upper = ur_string.to_ascii_uppercase();
-            let modules = bc_mur::qr_module_count(
-                upper.as_bytes(),
-                correction,
-            )?;
-            bc_mur::check_qr_density(
-                modules,
-                self.max_modules,
-            )?;
+            let modules =
+                bc_mur::qr_module_count(upper.as_bytes(), correction)?;
+            bc_mur::check_qr_density(modules, self.max_modules)?;
         }
 
         let img = bc_mur::render_ur_qr(
@@ -147,9 +133,7 @@ impl Exec for CommandArgs {
 
         let data = match self.format.as_str() {
             "png" => img.to_png()?,
-            "jpeg" | "jpg" => {
-                img.to_jpeg(self.jpeg_quality)?
-            }
+            "jpeg" | "jpg" => img.to_jpeg(self.jpeg_quality)?,
             other => {
                 anyhow::bail!("unknown format: {other} (expected png or jpeg)")
             }
@@ -157,11 +141,7 @@ impl Exec for CommandArgs {
 
         if let Some(path) = &self.output {
             std::fs::write(path, &data)?;
-            Ok(format!(
-                "Wrote {} bytes to {}",
-                data.len(),
-                path.display()
-            ))
+            Ok(format!("Wrote {} bytes to {}", data.len(), path.display()))
         } else {
             use std::io::Write;
             std::io::stdout().write_all(&data)?;

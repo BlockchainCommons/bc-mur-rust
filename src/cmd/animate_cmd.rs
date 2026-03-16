@@ -1,12 +1,11 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use clap::Args;
-
 use bc_mur::{
-    AnimateParams, Color, CorrectionLevel, Logo,
-    LogoClearShape, DEFAULT_MAX_MODULES,
+    AnimateParams, Color, CorrectionLevel, DEFAULT_MAX_MODULES, Logo,
+    LogoClearShape,
 };
+use clap::Args;
 
 use crate::exec::Exec;
 
@@ -91,26 +90,19 @@ pub struct CommandArgs {
 
 impl Exec for CommandArgs {
     fn exec(&self) -> Result<String> {
-        let ur_string =
-            super::single::read_input(&self.ur_string)?;
+        let ur_string = super::single::read_input(&self.ur_string)?;
         let (fg, bg) = if self.dark {
-            (
-                Color::from_hex(&self.bg)?,
-                Color::from_hex(&self.fg)?,
-            )
+            (Color::from_hex(&self.bg)?, Color::from_hex(&self.fg)?)
         } else {
-            (
-                Color::from_hex(&self.fg)?,
-                Color::from_hex(&self.bg)?,
-            )
+            (Color::from_hex(&self.fg)?, Color::from_hex(&self.bg)?)
         };
 
         let logo = if let Some(path) = &self.logo {
             let svg_data = std::fs::read(path)?;
-            let shape: LogoClearShape =
-                self.logo_shape.parse().map_err(|e: String| {
-                    anyhow::anyhow!(e)
-                })?;
+            let shape: LogoClearShape = self
+                .logo_shape
+                .parse()
+                .map_err(|e: String| anyhow::anyhow!(e))?;
             Some(Logo::from_svg(
                 &svg_data,
                 self.logo_fraction,
@@ -125,8 +117,7 @@ impl Exec for CommandArgs {
             .correction
             .as_ref()
             .map(|s| {
-                s.parse::<CorrectionLevel>()
-                    .map_err(|e| anyhow::anyhow!(e))
+                s.parse::<CorrectionLevel>().map_err(|e| anyhow::anyhow!(e))
             })
             .transpose()?;
 
@@ -150,14 +141,11 @@ impl Exec for CommandArgs {
             },
         };
 
-        let frames =
-            bc_mur::generate_frames(&ur, &params)?;
+        let frames = bc_mur::generate_frames(&ur, &params)?;
 
         match self.format.as_str() {
             "gif" => {
-                let data = bc_mur::encode_animated_gif(
-                    &frames, self.fps,
-                )?;
+                let data = bc_mur::encode_animated_gif(&frames, self.fps)?;
                 std::fs::write(&self.output, &data)?;
                 Ok(format!(
                     "Wrote {} frames ({} bytes) to {}",
@@ -167,11 +155,7 @@ impl Exec for CommandArgs {
                 ))
             }
             "prores" => {
-                bc_mur::encode_prores(
-                    &frames,
-                    self.fps,
-                    &self.output,
-                )?;
+                bc_mur::encode_prores(&frames, self.fps, &self.output)?;
                 Ok(format!(
                     "Wrote {} frames as ProRes to {}",
                     frames.len(),
@@ -179,7 +163,9 @@ impl Exec for CommandArgs {
                 ))
             }
             other => {
-                anyhow::bail!("unknown format: {other} (expected gif or prores)")
+                anyhow::bail!(
+                    "unknown format: {other} (expected gif or prores)"
+                )
             }
         }
     }

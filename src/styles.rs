@@ -15,10 +15,7 @@ pub fn get_styles() -> Styles {
                 .underline()
                 .fg_color(Some(Color::Ansi(AnsiColor::Yellow))),
         )
-        .literal(
-            Style::new()
-                .fg_color(Some(Color::Ansi(AnsiColor::Green))),
-        )
+        .literal(Style::new().fg_color(Some(Color::Ansi(AnsiColor::Green))))
         .invalid(
             Style::new()
                 .bold()
@@ -36,7 +33,6 @@ pub fn get_styles() -> Styles {
                 .fg_color(Some(Color::Ansi(AnsiColor::Green))),
         )
         .placeholder(
-            Style::new()
-                .fg_color(Some(Color::Ansi(AnsiColor::BrightCyan))),
+            Style::new().fg_color(Some(Color::Ansi(AnsiColor::BrightCyan))),
         )
 }

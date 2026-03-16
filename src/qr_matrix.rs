@@ -18,15 +18,9 @@ pub fn qr_module_count(
 /// Check that a module count is within a density limit.
 ///
 /// Returns `Error::QrCodeTooDense` if `module_count > max_modules`.
-pub fn check_qr_density(
-    module_count: usize,
-    max_modules: usize,
-) -> Result<()> {
+pub fn check_qr_density(module_count: usize, max_modules: usize) -> Result<()> {
     if module_count > max_modules {
-        Err(Error::QrCodeTooDense {
-            module_count,
-            max_modules,
-        })
+        Err(Error::QrCodeTooDense { module_count, max_modules })
     } else {
         Ok(())
     }
@@ -41,10 +35,7 @@ pub struct QrMatrix {
 impl QrMatrix {
     /// Encode a byte message into a QR matrix at the given
     /// correction level.
-    pub fn encode(
-        message: &[u8],
-        correction: CorrectionLevel,
-    ) -> Result<Self> {
+    pub fn encode(message: &[u8], correction: CorrectionLevel) -> Result<Self> {
         let code = QrCode::with_error_correction_level(
             message,
             correction.to_qrcode(),
@@ -76,9 +67,7 @@ mod tests {
 
     #[test]
     fn encode_small() {
-        let m =
-            QrMatrix::encode(b"HELLO", CorrectionLevel::Low)
-                .unwrap();
+        let m = QrMatrix::encode(b"HELLO", CorrectionLevel::Low).unwrap();
         // Version 1 QR: 21x21 modules
         assert_eq!(m.width(), 21);
         assert_eq!(m.modules.len(), 21 * 21);
@@ -89,9 +78,7 @@ mod tests {
         // UR strings are uppercased for alphanumeric QR
         // efficiency
         let ur = "UR:BYTES/HDCXDWINVEZM";
-        let m =
-            QrMatrix::encode(ur.as_bytes(), CorrectionLevel::Low)
-                .unwrap();
+        let m = QrMatrix::encode(ur.as_bytes(), CorrectionLevel::Low).unwrap();
         assert!(m.width() >= 21);
     }
 }
