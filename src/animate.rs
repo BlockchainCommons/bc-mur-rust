@@ -112,11 +112,10 @@ pub fn generate_frames(
 
         // Check density on first frame (all frames use the
         // same QR version for a given fragment length).
-        if i == 0 {
-            if let Some(limit) = params.max_modules {
+        if i == 0
+            && let Some(limit) = params.max_modules {
                 check_qr_density(matrix.width(), limit)?;
             }
-        }
 
         let image = render_from_matrix(
             &matrix,
